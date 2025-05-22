@@ -1,0 +1,759 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Feedback Sentiment Analyzer</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        /* Basic Reset & Box Sizing */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        /* Base Body & HTML Styles */
+        html, body {
+            height: 100%;
+            font-family: 'Roboto', sans-serif;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        body {
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            background-color: #F9F9F9; /* Solid off-white background */
+            font-size: 16px;
+        }
+
+        /* Accessibility: Visually hidden elements */
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0,0,0,0);
+            border: 0;
+        }
+
+        /* General container for both header and main content */
+        .page-container {
+            margin: 0 auto;
+            padding: 0 1.5rem;
+            box-sizing: border-box;
+        }
+
+        /* Specific width for the header container */
+        .header-container {
+            width: 80vw;
+            max-width: 1200px;
+        }
+
+        /* Specific width for the main content container */
+        .main-content-container {
+            width: 95vw;
+            max-width: 1600px;
+        }
+
+        /* Header Styles */
+        header {
+            background-color: #003366;
+            color: white;
+            padding: 1rem 0;
+            position: sticky;
+            top: 0;
+            width: 100%;
+            z-index: 1000;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .header-flex {
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            gap: 1.5rem;
+        }
+
+        .header-logo {
+            height: 90px;
+            border-radius: 8px;
+        }
+
+        .header-title {
+            display: flex;
+            flex-direction: column;
+            gap: 0.3rem;
+        }
+
+        .title-main {
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 700;
+            font-size: 2.2rem;
+            letter-spacing: 0.05em;
+        }
+
+        .title-sub {
+            font-family: 'Roboto', sans-serif;
+            font-weight: 300;
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        /* Main Content Area */
+        .main-wrapper {
+            flex: 1;
+            padding: 2rem 0;
+            margin-top: 120px;
+            width: 100%;
+        }
+
+        main {
+            display: flex;
+            justify-content: center;
+            padding: 0;
+            width: 100%;
+        }
+
+        /* Form Box and Input Styles */
+        .form-box {
+            background: white;
+            padding: 2.5rem;
+            border-radius: 16px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+            width: 100%;
+            margin-bottom: 2rem;
+        }
+
+        .input-field {
+            width: 100%;
+            padding: 1rem 1.2rem;
+            border-radius: 12px;
+            border: 1px solid #ddd;
+            font-size: 1.1rem;
+            margin-bottom: 0.75rem; /* Reduced margin-bottom */
+            background-color: #fcfcfc;
+            min-height: 150px;
+            resize: vertical;
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.05);
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .input-field:focus {
+            border-color: #0077b6;
+            box-shadow: 0 0 0 3px rgba(0, 119, 182, 0.2);
+            outline: none;
+        }
+
+        /* Buttons and Checkbox Group */
+        .form-actions {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .button {
+            padding: 12px 30px;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 120px;
+        }
+
+        .button-analyze {
+            background: #0077b6;
+        }
+
+        .button-analyze:hover {
+            background: #005f99;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(0, 119, 182, 0.3);
+        }
+
+        .button-reset {
+            background: #6c757d;
+        }
+
+        .button-reset:hover {
+            background: #5a6268;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(108, 117, 125, 0.3);
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-left: auto;
+            font-size: 0.95rem;
+            color: #555;
+        }
+
+        .checkbox-group input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            accent-color: #0077b6;
+            cursor: pointer;
+        }
+
+        /* Results Section */
+        .results-section {
+            margin-top: 2.5rem;
+            padding-top: 2.5rem;
+            border-top: 1px solid #eee;
+        }
+
+        .results-section h2 {
+            font-family: 'Montserrat', sans-serif;
+            font-size: 1.8rem;
+            margin-bottom: 1.5rem;
+            color: #003366;
+            text-align: center;
+        }
+
+        /* General Box Styles */
+        .box {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            font-size: 1rem;
+            flex: 1;
+            min-width: 300px;
+            white-space: pre-line;
+            margin-bottom: 1.5rem;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .box h3 {
+            font-family: 'Montserrat', sans-serif;
+            font-size: 1.3rem;
+            color: #0056b3;
+            margin-bottom: 1rem;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 0.5rem;
+        }
+
+        .box h4 {
+            font-family: 'Montserrat', sans-serif;
+            font-size: 1.1rem;
+            color: #0056b3;
+            margin-top: 1rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .box p {
+            margin-bottom: 0.8rem;
+        }
+
+        /* Row Layout for Boxes */
+        .row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        /* Specific Box Adjustments */
+        .result-card {
+            background: linear-gradient(135deg, #e0f2f7, #d4eaf1);
+            padding: 1.8rem;
+            border-radius: 12px;
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+            color: #003366;
+        }
+
+        .result-card h3 {
+            font-family: 'Montserrat', sans-serif;
+            font-size: 1.6rem;
+            margin-bottom: 1rem;
+            color: #003366;
+            border-bottom: none;
+            padding-bottom: 0;
+        }
+
+        .result-card p {
+            font-size: 1.1rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .sentiment-box {
+            align-items: center;
+            text-align: center;
+        }
+
+        .sentiment-emoji {
+            font-size: 1.8em;
+            margin-right: 0.5rem;
+            vertical-align: middle;
+        }
+
+        .word-cloud-box {
+            justify-content: center;
+            align-items: center;
+        }
+
+        .wordcloud-img {
+            max-width: 100%;
+            height: auto;
+            display: block;
+            margin: 0 auto;
+            border: none;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+
+        /* Word List Styling */
+        .word-category {
+            margin-bottom: 1rem;
+        }
+
+        .word-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .word-tag {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+        }
+
+        .word-tag.impactful {
+            background-color: #e8f5e9;
+            color: #2e7d32;
+            border: 1px solid #4CAF50;
+        }
+
+        .word-tag.negative {
+            background-color: #ffebee;
+            color: #c62828;
+            border: 1px solid #F44336;
+        }
+
+        .word-tag.neutral {
+            background-color: #fffde7;
+            color: #fbc02d;
+            border: 1px solid #FFC107;
+        }
+
+        .word-tag:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        /* List Styles for Recommendations and Theme Suggestions */
+        .suggestions-list, .recommendations-list {
+            list-style-type: disc; /* To disc for bullet points */
+            padding-left: 1.5rem; /* Added padding for bullet points */
+        }
+
+        .suggestions-list li, .recommendations-list li {
+            background-color: #f8f9fa;
+            padding: 10px 15px;
+            margin-bottom: 8px;
+            border-radius: 8px;
+            border-left: 4px solid #0077b6;
+            font-size: 0.95rem;
+            word-wrap: break-word;
+        }
+
+        .recommendations-list li {
+            border-left-color: #28a745;
+        }
+
+        /* No data message */
+        .no-data-message {
+            font-style: italic;
+            color: #777;
+            text-align: center;
+            padding: 1rem;
+            background-color: #f0f0f0;
+            border-radius: 8px;
+        }
+
+        /* Footer Styles */
+        .footer {
+            text-align: center;
+            font-size: 0.9rem;
+            padding: 1.5rem;
+            background: #e9ecef;
+            color: #6c757d;
+            margin-top: auto;
+            border-top: 1px solid #dee2e6;
+        }
+
+        .footer p {
+            margin-bottom: 0.5rem;
+        }
+
+
+        /* SVG Gauge Specific Styling */
+        .gauge-container {
+            width: 100%;
+            max-width: 250px;
+            margin: 1rem auto;
+            text-align: center;
+            position: relative;
+        }
+
+        .gauge {
+            width: 100%;
+            height: auto;
+            overflow: visible;
+        }
+
+        /* Decreased font size for the score text */
+        .gauge-score-text {
+            font-family: 'Montserrat', sans-serif;
+            font-size: 1.8em; /* Decreased font size */
+            font-weight: 700;
+            fill: #333;
+            transform: translateY(20px);
+        }
+
+        /* Benchmark marker styling */
+        .benchmark-marker {
+            fill: #6c757d; /* Dark grey for the marker */
+            font-size: 0.8em; /* Smaller font for benchmark label */
+            text-anchor: middle;
+            font-weight: 500;
+        }
+
+        /* Transition for the color arc fill */
+        #gauge-arc {
+            transition: stroke-dasharray 2s ease-out; /* Slower, smoother animation for filling */
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .header-container, .main-content-container {
+                width: 95vw;
+                padding: 0 1rem;
+            }
+
+            .header-flex {
+                flex-direction: column;
+                text-align: center;
+                gap: 0.5rem;
+            }
+
+            .header-logo {
+                height: 70px;
+            }
+
+            .title-main {
+                font-size: 1.8rem;
+            }
+
+            .title-sub {
+                font-size: 1rem;
+            }
+
+            .main-wrapper {
+                margin-top: 100px;
+                padding: 1.5rem 0;
+            }
+
+            .form-box {
+                padding: 1.5rem;
+            }
+
+            .input-field {
+                min-height: 100px;
+                margin-bottom: 0.5rem; /* Adjusted for smaller screens */
+            }
+
+            .form-actions {
+                flex-direction: column;
+                gap: 1rem;
+                align-items: stretch;
+            }
+
+            .button {
+                width: 100%;
+            }
+
+            .checkbox-group {
+                margin-left: 0;
+                justify-content: center;
+            }
+
+            .row {
+                flex-direction: column;
+                gap: 1rem;
+            }
+
+            .box {
+                min-width: unset;
+                width: 100%;
+            }
+
+            .results-section h2 {
+                font-size: 1.5rem;
+            }
+
+            .suggestions-list, .recommendations-list {
+                padding-left: 1.2rem; /* Adjust padding for smaller screens */
+            }
+        }
+
+        @media (max-width: 480px) {
+            .title-main {
+                font-size: 1.5rem;
+            }
+            .title-sub {
+                font-size: 0.9rem;
+            }
+            .form-box {
+                padding: 1rem;
+            }
+            .button {
+                font-size: 1rem;
+                padding: 10px 20px;
+            }
+            .box h3 {
+                font-size: 1.2rem;
+            }
+            .word-tag {
+                font-size: 0.8em;
+                padding: 4px 8px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="page-container header-container">
+            <div class="header-flex">
+                <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo" class="header-logo" />
+                <div class="header-title">
+                    <span class="title-main">Contents Insight Engine</span>
+                    <span class="title-sub">Understand feedback. Analyze sentiment. Act with AI-powered clarity.</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="main-wrapper">
+        <main>
+            <div class="page-container main-content-container">
+                <div class="form-box">
+                    <form method="POST">
+                        <label for="feedback" class="sr-only">Enter your content...</label>
+                        <textarea id="feedback" name="feedback" class="input-field" placeholder="Enter your feedback or content here..." required>{{ result.text if result else '' }}</textarea>
+
+                        <div class="form-actions">
+                            <button type="submit" class="button button-analyze">Analyze</button>
+                            <a href="/" class="button button-reset">Reset</a>
+                            <div class="checkbox-group">
+                                <input type="checkbox" id="exclude_names" name="exclude_names" {% if request.form.get('exclude_names') == 'on' %}checked{% endif %}>
+                                <label for="exclude_names">Exclude Names & Professions</label>
+                            </div>
+                        </div>
+                    </form>
+
+                    {% if result %}
+                    <section class="results-section">
+                        <h2>Analysis Results</h2>
+
+                        <div class="result-card">
+                            <h3>Original Feedback</h3>
+                            <p>{{ result.text }}</p>
+                            <p><strong>Character Count:</strong> {{ result.text | length }}</p>
+                        </div>
+
+                        <div class="row">
+                            <div class="box sentiment-box">
+                                <h3>Sentiment: <span class="sentiment-emoji">{{ result.emoji }}</span> {{ result.sentiment }}</h3>
+                                <div class="gauge-container">
+                                    <svg class="gauge" viewBox="0 0 200 100">
+                                        <path d="M 10 100 A 90 90 0 0 1 190 100" fill="none" stroke="#eee" stroke-width="20" />
+                                        <path id="gauge-arc" d="M 10 100 A 90 90 0 0 1 190 100" fill="none" stroke="url(#gaugeGradient)" stroke-width="20" stroke-dasharray="0 283" />
+                                        <text x="100" y="90" text-anchor="middle" class="gauge-score-text">{{ result.score | round(1) }}%</text>
+
+                                        <g id="benchmark-group">
+                                            <line x1="100" y1="100" x2="100" y2="5" stroke="#6c757d" stroke-width="2" stroke-dasharray="2 2" />
+                                            <text x="100" y="0" class="benchmark-marker">75% Benchmark</text>
+                                        </g>
+
+                                        <defs>
+                                            <linearGradient id="gaugeGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                                                <stop offset="0%" stop-color="#F44336"/>
+                                                <stop offset="49%" stop-color="#F44336"/>
+                                                <stop offset="50%" stop-color="#FFEB3B"/>
+                                                <stop offset="74%" stop-color="#FFC107"/>
+                                                <stop offset="75%" stop-color="#4CAF50"/>
+                                                <stop offset="100%" stop-color="#4CAF50"/>
+                                            </linearGradient>
+                                        </defs>
+                                    </svg>
+                                </div>
+                            </div>
+
+                            <div class="box word-cloud-box">
+                                <h3>Word Cloud</h3>
+                                {% if result.cloud_img %}
+                                    <img class="wordcloud-img" src="data:image/png;base64,{{ result.cloud_img }}" alt="Word Cloud">
+                                {% else %}
+                                    <p class="no-data-message">Could not generate word cloud.</p>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="row">
+                             <div class="box key-words-box">
+                                <h3>Key Words: Impactful (Positive/Action-oriented)</h3>
+                                <div class="word-category">
+                                    <div class="word-list">
+                                        {% if result.impactful %}
+                                            {% for word in result.impactful.split(', ') %}
+                                                <span class="word-tag impactful">{{ word }}</span>
+                                            {% endfor %}
+                                        {% else %}
+                                            <p class="no-data-message">No impactful words detected.</p>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="box">
+                                <h3>Central Theme & Suggestions</h3>
+                                {% if result.theme and result.theme_suggestions %}
+                                    <p><strong>Central theme:</strong> {{ result.theme }}</p>
+                                    <h4>Suggestions for Improvement:</h4>
+                                    <ul class="suggestions-list">
+                                        {% for tip in result.theme_suggestions %}
+                                            <li>{{ tip }}</li>
+                                        {% endfor %}
+                                    </ul>
+                                {% else %}
+                                    <p class="no-data-message">Theme details not available or could not be generated.</p>
+                                {% endif %}
+                            </div>
+
+                            <div class="box">
+                                <h3>Top 3 Recommendations</h3>
+                                {% if result.recos and result.recos | length > 0 and result.recos[0] != "No improved recommendations found." %}
+                                    <ul class="recommendations-list">
+                                        {% for line in result.recos %}
+                                            <li>{{ line }}</li>
+                                        {% endfor %}
+                                    </ul>
+                                {% elif result.recos and result.recos is string and ("Recommendation error" in result.recos or "No improved recommendations found." in result.recos) %}
+                                    <p class="no-data-message">{{ result.recos }}</p>
+                                {% else %}
+                                    <p class="no-data-message">No improved recommendations found.</p>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="box key-words-box">
+                                <h3>Key Words: Negative (Problem-related)</h3>
+                                <div class="word-category">
+                                    <div class="word-list">
+                                        {% if result.negative %}
+                                            {% for word in result.negative.split(', ') %}
+                                                <span class="word-tag negative">{{ word }}</span>
+                                            {% endfor %}
+                                        {% else %}
+                                            <p class="no-data-message">No negative words detected.</p>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="box key-words-box">
+                                <h3>Key Words: Neutral (Descriptive)</h3>
+                                <div class="word-category">
+                                    <div class="word-list">
+                                        {% if result.neutral %}
+                                            {% for word in result.neutral.split(', ') %}
+                                                <span class="word-tag neutral">{{ word }}</span>
+                                            {% endfor %}
+                                        {% else %}
+                                            <p class="no-data-message">No neutral words detected.</p>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+                    {% endif %}
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <footer class="footer">
+        <div class="page-container main-content-container">
+            <p>&copy; {{ date }} &nbsp;|&nbsp; Contents Insight Engine. All rights reserved.</p>
+            <p>Analyze sentiment and extract themes from user feedback using AI. Built for smarter decisions.</p>
+        </div>
+    </footer>
+
+    {% if result %}
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const score = parseFloat("{{ result.score | default(0) }}");
+            const gaugeArc = document.getElementById("gauge-arc");
+            const benchmarkGroup = document.getElementById("benchmark-group");
+
+            // Define the total length of the arc (circumference of a semi-circle with radius 90)
+            const arcLength = Math.PI * 90; // Circumference = 2 * PI * r, so semi-circle = PI * r
+
+            // Calculate the length of the filled portion of the arc
+            // This maps 0-100% score to 0-arcLength fill.
+            const fillLength = (score / 100) * arcLength;
+
+            // Set the initial dash array to 0, arcLength to hide the arc
+            gaugeArc.setAttribute("stroke-dasharray", `0 ${arcLength}`);
+
+            // Trigger the animation after a short delay
+            setTimeout(() => {
+                // Animate the stroke-dasharray to fill up to the desired score
+                gaugeArc.setAttribute("stroke-dasharray", `${fillLength} ${arcLength - fillLength}`);
+            }, 100); // Small delay for animation to start
+
+            // Benchmark marker positioning
+            // The benchmark line also needs to be rotated to its correct position.
+            // The gauge spans 180 degrees, from -90 to +90 degrees relative to the vertical.
+            // 75% on the score maps to (75 * 1.8) - 90 = 45 degrees rotation.
+            const benchmarkScore = 75;
+            const benchmarkAngle = (benchmarkScore * 1.8) - 90;
+
+            if (benchmarkGroup) {
+                // Ensure benchmark marker is positioned correctly relative to the gauge center
+                benchmarkGroup.setAttribute("transform", `rotate(${benchmarkAngle} 100 100)`);
+            }
+        });
+    </script>
+    {% endif %}
+</body>
+</html>

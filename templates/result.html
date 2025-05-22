@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Results</title>
+    <style>
+        body { background: #fdf0f5; font-family: sans-serif; padding: 2rem; }
+        .box { background: white; padding: 1rem; margin: 1rem 0; border-radius: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        img { width: 100%; max-width: 500px; }
+    </style>
+</head>
+<body>
+    <img src="{{ url_for('static', filename='logo.png') }}" width="60">
+    <h2>Feedback Summary</h2>
+
+    <div class="box"><b>Feedback:</b><br>{{ text }}</div>
+
+    <div class="box"><b>Sentiment:</b> {{ sentiment }} ({{ score }}) {{ emoji }}</div>
+    <div class="box"><b>Impactful Words:</b> {{ impactful }}<br><b>Negative/Neutral Words:</b> {{ negative }}</div>
+    <div class="box"><b>Word Cloud:</b><br><img src="data:image/png;base64,{{ cloud_img }}"></div>
+    <div class="box"><b>Central Theme & Suggestions:</b><br>{{ theme }}</div>
+    <div class="box"><b>Top 3 Recommendations:</b><br>{{ recos }}</div>
+</body>
+</html>

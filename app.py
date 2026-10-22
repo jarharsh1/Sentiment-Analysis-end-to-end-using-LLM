@@ -1,3 +1,4 @@
+import os
 from flask import Flask, request, render_template
 import matplotlib
 matplotlib.use('Agg') # Use 'Agg' for non-interactive backend
@@ -402,4 +403,4 @@ def index():
 
 if __name__ == '__main__':
     print("[App Started] Running on http://127.0.0.1:5000")
-    app.run(debug=True)
+    app.run(debug=os.environ.get('FLASK_DEBUG') == '1')
